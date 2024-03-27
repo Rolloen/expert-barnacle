@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"net/http"
@@ -6,5 +6,5 @@ import (
 )
 
 func Routes(router *http.ServeMux) {
-	router.HandleFunc("POST /test", handlers.FormatDataLogHandler)
+	router.HandleFunc("GET /analysis", handlers.GetDataLogHandler)
 }
