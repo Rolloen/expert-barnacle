@@ -12,6 +12,13 @@ type testFormatDataToStrucTableStruct struct {
 	want  []AnalysisInDataStruct
 }
 
+var (
+	utc2 = time.FixedZone("CEST", 60*60*2)
+	utc1 = time.FixedZone("CEST", 60*60)
+)
+
+/* FormatDataAnalysisToStruct() TESTS */
+
 func assertFormatedAnalysisDataEqualsExpectedData(t *testing.T, expectedOutput []AnalysisInDataStruct, actualOutput []AnalysisInDataStruct) {
 	for index, val := range expectedOutput {
 		actOut := actualOutput[index]
@@ -27,8 +34,6 @@ func assertFormatedAnalysisDataEqualsExpectedData(t *testing.T, expectedOutput [
 	}
 }
 func TestFormatDataAnalysisToStructNoErrors(t *testing.T) {
-	utc2 := time.FixedZone("CEST", 60*60*2)
-	utc1 := time.FixedZone("CEST", 60*60)
 	testTables := []testFormatDataToStrucTableStruct{
 		{
 			name: "Test FormatDataToStruct() : no special case , with 3 correct fields per subarray",
@@ -50,7 +55,7 @@ func TestFormatDataAnalysisToStructNoErrors(t *testing.T) {
 			},
 		},
 		{
-			name: `Test FormatDataToStruct() : wrong input format , have more than 3 fields
+			name: `Test FormatDataToStruct() : wrong input format, have more than 3 fields
 				 (the additionnal fields are caused by the use of "," in the Error message)`,
 			input: [][]string{
 				{"2023-02-11T21:09:51+01:00", "theMatrix.go", "Red pill taken", "welcome to the real world"},
@@ -113,4 +118,59 @@ func TestFormatDataAnalysisToStructEmptyInput(t *testing.T) {
 	if actualErr.Error() != expectedErrOutput.Error() {
 		t.Errorf("No/wrong error thrown, expected : %s but got : %s", expectedErrOutput.Error(), actualErr.Error())
 	}
+}
+
+/* FilterDatas() TESTS */
+func assertFilteredDataEqualsExpectedData(t *testing.T, expectedOutput []FilteredAnalysisDataStruct, actualOutput []FilteredAnalysisDataStruct) {
+	for index, val := range expectedOutput {
+		actOut := actualOutput[index]
+		if actOut.DateFormatted != val.DateFormatted {
+			t.Errorf("Not same formatted date , expected: %s but got: %s", val.DateFormatted, actOut.DateFormatted)
+		}
+		if actOut.HourFormatted != val.HourFormatted {
+			t.Errorf("Not same formatted hour , expected: %s but got: %s", val.HourFormatted, actOut.HourFormatted)
+		}
+		if actOut.ErrMsg != val.ErrMsg {
+			t.Errorf("Not same error messsage , expected: %s but got: %s", val.ErrMsg, actOut.ErrMsg)
+		}
+		if actOut.FileName != val.FileName {
+			t.Errorf("Not same file name , expected: %s but got: %s", val.FileName, actOut.FileName)
+		}
+	}
+}
+func TestFilterDatasWith(t *testing.T) {
+
+	// Arrange
+	input := []AnalysisInDataStruct{
+		{
+			Date:     time.Date(2019, 04, 30, 12, 01, 39, 00, utc2),
+			FileName: "network.go",
+			ErrMsg:   "Network connection established",
+		},
+		{
+			Date:     time.Date(2019, 04, 30, 12, 01, 42, 00, utc2),
+			FileName: "db.go",
+			ErrMsg:   "Transaction failed",
+		},
+		{
+			Date:     time.Date(2019, 04, 30, 12, 10, 42, 00, utc2),
+			FileName: "network.go",
+			ErrMsg:   "Network connection established",
+		},
+	}
+
+	expectedOutput := []FilteredAnalysisDataStruct{
+		{
+			DateFormatted: "30042019",
+			HourFormatted: "12",
+			FileName:      "network.go",
+			ErrMsg:        "Network connection established",
+		},
+	}
+
+	// Act
+	actualOuput := FilterDatas(input)
+	// Assert
+	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
+
 }

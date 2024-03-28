@@ -2,6 +2,7 @@ package analysisLog
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -32,4 +33,49 @@ func FormatDataAnalysisToStruct(inpDatas [][]string) ([]AnalysisInDataStruct, er
 		}
 	}
 	return structuredDatas, nil
+}
+
+func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisDataStruct {
+	var filteredDatas []FilteredAnalysisDataStruct
+	counter := make(map[string]map[string]int)
+	// construct the map[string]map[string]int to count the nb de occurence
+	// for each pair of filename/msg per day and hour
+	for _, inputData := range inputStructDatas {
+		formattedDate := inputData.Date.Format("02012006")
+		formattedHour := inputData.Date.Hour()
+		dateKey := fmt.Sprintf("%s-%d", formattedDate, formattedHour)
+		if len(counter[dateKey]) == 0 {
+			counter[dateKey] = make(map[string]int)
+		}
+		formattedMsgKey := fmt.Sprintf("%s-%s", inputData.FileName, inputData.ErrMsg)
+		counter[dateKey][formattedMsgKey]++
+	}
+
+	// find the most occured pair of filename/errMsg and put it in the returned array
+	for dateKey, msgMap := range counter {
+		var mostOccuredMsg string
+		max := 0
+		for msgKey, count := range msgMap {
+			if count > max {
+				max = count
+				mostOccuredMsg = msgKey
+			}
+		}
+
+		splitedDateStr := strings.Split(dateKey, "-")
+		date := splitedDateStr[0]
+		hour := splitedDateStr[1]
+		splitedMsgStr := strings.Split(mostOccuredMsg, "-")
+		filename := splitedMsgStr[0]
+		errMsg := splitedMsgStr[1]
+		tempFilteredData := FilteredAnalysisDataStruct{
+			DateFormatted: date,
+			HourFormatted: hour,
+			FileName:      filename,
+			ErrMsg:        errMsg,
+		}
+		filteredDatas = append(filteredDatas, tempFilteredData)
+	}
+
+	return filteredDatas
 }

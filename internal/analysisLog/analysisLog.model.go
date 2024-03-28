@@ -7,3 +7,10 @@ type AnalysisInDataStruct struct {
 	FileName string    `json:"fileName"`
 	ErrMsg   string    `json:"errMsg"`
 }
+
+type FilteredAnalysisDataStruct struct {
+	DateFormatted string `json:"dateFormatted"`
+	HourFormatted string `json:"hourFormatted"`
+	FileName      string `json:"fileName"`
+	ErrMsg        string `json:"errMsg"`
+}

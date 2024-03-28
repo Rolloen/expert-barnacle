@@ -3,8 +3,10 @@ package handlers
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"techTest/internal/analysisLog"
 )
 
 const FORMATTED_LOG_NAME = "formattedLog"
@@ -27,9 +29,11 @@ func GetDataLogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Parse and format the input data to wanted output data struct
-	// structuredData := analysisData.FormatDataToStruct(data, type)
-	// format the structuredData to csv compatible data
+	structuredData, _ := analysisLog.FormatDataAnalysisToStruct(data)
 
+	// Use the structured data to find the most logged error grouped by day and hour
+	filteredStructuredData := analysisLog.FilterDatas(structuredData)
+	log.Println(filteredStructuredData)
 	// write the ouput CSV data
 	w.Header().Set("Content-Type", "text/csv")
 	w.Header().Set("Content-Disposition", "attachment;filename="+FORMATTED_LOG_NAME+".csv")
