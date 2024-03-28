@@ -7,6 +7,10 @@ import (
 	"time"
 )
 
+const (
+	OUTPUT_DATE_FORMAT = "02012006"
+)
+
 // Parse a given CSV datas to an array of custom struct
 //
 // Take into account if fields of the CSV has errors (like more than 3 fields)
@@ -36,22 +40,48 @@ func FormatDataAnalysisToStruct(inpDatas [][]string) ([]AnalysisInDataStruct, er
 }
 
 func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisDataStruct {
-	var filteredDatas []FilteredAnalysisDataStruct
+
+	counter := createMapOfOccurence(inputStructDatas)
+
+	filteredDatas := createSlicesOfMostOccurence(counter)
+
+	return filteredDatas
+}
+
+// construct the map[string]map[string]int to count the nb de occurence
+// for each pair of filename/msg per day and hour
+//
+// Special case : if hour >= 23, it should be counted as the next day, at hour 00
+func createMapOfOccurence(inputStructDatas []AnalysisInDataStruct) map[string]map[string]int {
 	counter := make(map[string]map[string]int)
-	// construct the map[string]map[string]int to count the nb de occurence
-	// for each pair of filename/msg per day and hour
 	for _, inputData := range inputStructDatas {
-		formattedDate := inputData.Date.Format("02012006")
-		formattedHour := inputData.Date.Hour()
-		dateKey := fmt.Sprintf("%s-%d", formattedDate, formattedHour)
+		dateKey := generateDateKey(inputData)
 		if len(counter[dateKey]) == 0 {
 			counter[dateKey] = make(map[string]int)
 		}
 		formattedMsgKey := fmt.Sprintf("%s-%s", inputData.FileName, inputData.ErrMsg)
 		counter[dateKey][formattedMsgKey]++
 	}
+	return counter
+}
 
-	// find the most occured pair of filename/errMsg and put it in the returned array
+func generateDateKey(inputData AnalysisInDataStruct) string {
+	var formattedHour string
+	var formattedDate string
+	dateToFormat := inputData.Date
+	if inputData.Date.Hour() >= 23 {
+		dateToFormat = dateToFormat.Add(time.Hour)
+	}
+	formattedHour = fmt.Sprintf("%02d", dateToFormat.Hour())
+	formattedDate = dateToFormat.Format(OUTPUT_DATE_FORMAT)
+	dateKey := fmt.Sprintf("%s-%s", formattedDate, formattedHour)
+	return dateKey
+}
+
+// find the most occured pair of filename/errMsg and put it in the returned array
+func createSlicesOfMostOccurence(counter map[string]map[string]int) []FilteredAnalysisDataStruct {
+	var filteredDatas []FilteredAnalysisDataStruct
+
 	for dateKey, msgMap := range counter {
 		var mostOccuredMsg string
 		max := 0
@@ -61,7 +91,6 @@ func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisData
 				mostOccuredMsg = msgKey
 			}
 		}
-
 		splitedDateStr := strings.Split(dateKey, "-")
 		date := splitedDateStr[0]
 		hour := splitedDateStr[1]
@@ -76,6 +105,5 @@ func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisData
 		}
 		filteredDatas = append(filteredDatas, tempFilteredData)
 	}
-
 	return filteredDatas
 }

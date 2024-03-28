@@ -12,6 +12,12 @@ type testFormatDataToStrucTableStruct struct {
 	want  []AnalysisInDataStruct
 }
 
+type testFilterDataTableStruct struct {
+	name  string
+	input []AnalysisInDataStruct
+	want  []FilteredAnalysisDataStruct
+}
+
 var (
 	utc2 = time.FixedZone("CEST", 60*60*2)
 	utc1 = time.FixedZone("CEST", 60*60)
@@ -138,33 +144,126 @@ func assertFilteredDataEqualsExpectedData(t *testing.T, expectedOutput []Filtere
 		}
 	}
 }
-func TestFilterDatasWith(t *testing.T) {
+func TestFilterDatasWithValidInput(t *testing.T) {
+	testTables := []testFilterDataTableStruct{
+		{
+			name: "Test FilterDatas() : valid input with 3 struct",
+			input: []AnalysisInDataStruct{
+				{
+					Date:     time.Date(2019, 04, 30, 12, 01, 39, 00, utc2),
+					FileName: "network.go",
+					ErrMsg:   "Network connection established",
+				},
+				{
+					Date:     time.Date(2019, 04, 30, 12, 01, 42, 00, utc2),
+					FileName: "db.go",
+					ErrMsg:   "Transaction failed",
+				},
+				{
+					Date:     time.Date(2019, 04, 30, 12, 10, 42, 00, utc2),
+					FileName: "network.go",
+					ErrMsg:   "Network connection established",
+				},
+			},
+			want: []FilteredAnalysisDataStruct{
+				{
+					DateFormatted: "30042019",
+					HourFormatted: "12",
+					FileName:      "network.go",
+					ErrMsg:        "Network connection established",
+				},
+			},
+		},
+		{
+			name: `Test FilterDatas() :valid input with 4 input, 2 diffrent pair of date/hour`,
+			input: []AnalysisInDataStruct{
+				{
+					Date:     time.Date(2022, 03, 12, 15, 01, 39, 00, utc2),
+					FileName: "memeGenerator.go",
+					ErrMsg:   "Error: Failed to generate a meme",
+				},
+				{
+					Date:     time.Date(2022, 03, 11, 11, 01, 42, 00, utc2),
+					FileName: "theHitchhiker.go",
+					ErrMsg:   "Error: So long, and thanks for all the fish",
+				},
+				{
+					Date:     time.Date(2022, 03, 12, 15, 10, 42, 00, utc2),
+					FileName: "memeGenerator.go",
+					ErrMsg:   "Error: Failed to generate a meme",
+				},
+				{
+					Date:     time.Date(2022, 03, 11, 11, 10, 42, 00, utc2),
+					FileName: "theHitchhiker.go",
+					ErrMsg:   "Error: So long, and thanks for all the fish",
+				},
+			},
+			want: []FilteredAnalysisDataStruct{
+				{
+					DateFormatted: "12032022",
+					HourFormatted: "15",
+					FileName:      "memeGenerator.go",
+					ErrMsg:        "Error: Failed to generate a meme",
+				},
+				{
+					DateFormatted: "11032022",
+					HourFormatted: "11",
+					FileName:      "theHitchhiker.go",
+					ErrMsg:        "Error: So long, and thanks for all the fish",
+				},
+			},
+		},
+	}
+	for _, tt := range testTables {
+		ttValue := tt
+		t.Run(tt.name, func(t *testing.T) {
+			// Act
+			actualOutput := FilterDatas(ttValue.input)
+			// Assert
+			assertFilteredDataEqualsExpectedData(t, ttValue.want, actualOutput)
+		})
+	}
+}
+
+// special case where the hour is >=23 then it count for the next day, hour 00:00
+func TestFilterDatasWithSpecialCase(t *testing.T) {
 
 	// Arrange
 	input := []AnalysisInDataStruct{
 		{
-			Date:     time.Date(2019, 04, 30, 12, 01, 39, 00, utc2),
+			Date:     time.Date(2019, 04, 13, 23, 01, 39, 00, utc2),
 			FileName: "network.go",
 			ErrMsg:   "Network connection established",
 		},
 		{
-			Date:     time.Date(2019, 04, 30, 12, 01, 42, 00, utc2),
+			Date:     time.Date(2019, 04, 13, 12, 01, 42, 00, utc2),
 			FileName: "db.go",
 			ErrMsg:   "Transaction failed",
 		},
 		{
-			Date:     time.Date(2019, 04, 30, 12, 10, 42, 00, utc2),
+			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
 			FileName: "network.go",
 			ErrMsg:   "Network connection established",
+		},
+		{
+			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
+			FileName: "db.go",
+			ErrMsg:   "Transaction failed",
 		},
 	}
 
 	expectedOutput := []FilteredAnalysisDataStruct{
 		{
-			DateFormatted: "30042019",
-			HourFormatted: "12",
+			DateFormatted: "14042019",
+			HourFormatted: "00",
 			FileName:      "network.go",
 			ErrMsg:        "Network connection established",
+		},
+		{
+			DateFormatted: "13042019",
+			HourFormatted: "12",
+			FileName:      "db.go",
+			ErrMsg:        "Transaction failed",
 		},
 	}
 
@@ -174,3 +273,52 @@ func TestFilterDatasWith(t *testing.T) {
 	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
 
 }
+
+// // special case where there are no most
+// func TestFilterDatasWithSpecialCaseError(t *testing.T) {
+
+// 	// Arrange
+// 	input := []AnalysisInDataStruct{
+// 		{
+// 			Date:     time.Date(2019, 04, 13, 23, 01, 39, 00, utc2),
+// 			FileName: "network.go",
+// 			ErrMsg:   "Network connection established",
+// 		},
+// 		{
+// 			Date:     time.Date(2019, 04, 13, 12, 01, 42, 00, utc2),
+// 			FileName: "db.go",
+// 			ErrMsg:   "Transaction failed",
+// 		},
+// 		{
+// 			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
+// 			FileName: "network.go",
+// 			ErrMsg:   "Network connection established",
+// 		},
+// 		{
+// 			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
+// 			FileName: "db.go",
+// 			ErrMsg:   "Transaction failed",
+// 		},
+// 	}
+
+// 	expectedOutput := []FilteredAnalysisDataStruct{
+// 		{
+// 			DateFormatted: "14042019",
+// 			HourFormatted: "00",
+// 			FileName:      "network.go",
+// 			ErrMsg:        "Network connection established",
+// 		},
+// 		{
+// 			DateFormatted: "13042019",
+// 			HourFormatted: "12",
+// 			FileName:      "db.go",
+// 			ErrMsg:        "Transaction failed",
+// 		},
+// 	}
+
+// 	// Act
+// 	actualOuput := FilterDatas(input)
+// 	// Assert
+// 	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
+
+// }
