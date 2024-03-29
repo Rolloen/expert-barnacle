@@ -3,10 +3,9 @@ package handlers
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"techTest/internal/analysisLog"
+	"techTest/pkg"
 )
 
 const FORMATTED_LOG_NAME = "formattedLog"
@@ -14,31 +13,31 @@ const FORMATTED_LOG_NAME = "formattedLog"
 func GetDataLogHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Read the input CSV file
-	file, err := os.Open("journaux.csv")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer file.Close()
-	reader := csv.NewReader(file)
-	reader.FieldsPerRecord = -1
-	data, err := reader.ReadAll()
+	data, err := pkg.ReadCSVFromSources(pkg.CSV_SOURCE_FILE)
 	if err != nil {
 		fmt.Println("error : ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	// Parse and format the input data to wanted output data struct
-	structuredData, _ := analysisLog.FormatDataAnalysisToStruct(data)
+	structuredData, err := analysisLog.FormatDataAnalysisToStruct(data)
+	if err != nil {
+		fmt.Println("error : ", err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	// Use the structured data to find the most logged error grouped by day and hour
 	filteredStructuredData := analysisLog.FilterDatas(structuredData)
-	log.Println(filteredStructuredData)
+	// NOTES: not the most optimal way but I could find a optimized way of filtering data AND keeping the order
+	sortedFilteredStrucData := analysisLog.SortStrucDataByDateAndHour(filteredStructuredData)
+	// convert struct data to CSV readable data
+	parsedCsvData := analysisLog.ConvertStructDataToCSVData(sortedFilteredStrucData)
 	// write the ouput CSV data
 	w.Header().Set("Content-Type", "text/csv")
 	w.Header().Set("Content-Disposition", "attachment;filename="+FORMATTED_LOG_NAME+".csv")
 	writer := csv.NewWriter(w)
-	if err := writer.WriteAll(data); err != nil {
+	if err := writer.WriteAll(parsedCsvData); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

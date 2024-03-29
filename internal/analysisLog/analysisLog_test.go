@@ -274,7 +274,8 @@ func TestFilterDatasWithSpecialCase(t *testing.T) {
 
 }
 
-// // special case where there are no most
+// special case where there are no most occurence (equality in count per pair of filename/err msg)
+//TODO:
 // func TestFilterDatasWithSpecialCaseError(t *testing.T) {
 
 // 	// Arrange

@@ -3,6 +3,7 @@ package analysisLog
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 )
@@ -31,7 +32,7 @@ func FormatDataAnalysisToStruct(inpDatas [][]string) ([]AnalysisInDataStruct, er
 			FileName: data[1],
 		}
 		if len(data) > 3 {
-			structuredDatas[i].ErrMsg = strings.Join(data[2:], ", ")
+			structuredDatas[i].ErrMsg = strings.Join(data[2:], ",")
 		} else {
 			structuredDatas[i].ErrMsg = data[2]
 		}
@@ -39,6 +40,7 @@ func FormatDataAnalysisToStruct(inpDatas [][]string) ([]AnalysisInDataStruct, er
 	return structuredDatas, nil
 }
 
+// Filter out the given log to give only the most occured pair of filename/error msg per day and hour
 func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisDataStruct {
 
 	counter := createMapOfOccurence(inputStructDatas)
@@ -46,6 +48,26 @@ func FilterDatas(inputStructDatas []AnalysisInDataStruct) []FilteredAnalysisData
 	filteredDatas := createSlicesOfMostOccurence(counter)
 
 	return filteredDatas
+}
+
+func ConvertStructDataToCSVData(structuredDatas []FilteredAnalysisDataStruct) [][]string {
+	var csvData [][]string
+	for _, val := range structuredDatas {
+		tempData := []string{
+			val.DateFormatted, val.HourFormatted, val.FileName, val.ErrMsg,
+		}
+		csvData = append(csvData, tempData)
+	}
+	return csvData
+}
+
+func SortStrucDataByDateAndHour(structuredDatas []FilteredAnalysisDataStruct) []FilteredAnalysisDataStruct {
+	sort.Slice(structuredDatas, func(i, j int) bool {
+		parsedDateI, _ := time.Parse("0201200615", structuredDatas[i].DateFormatted+structuredDatas[i].HourFormatted)
+		parsedDateJ, _ := time.Parse("0201200615", structuredDatas[j].DateFormatted+structuredDatas[j].HourFormatted)
+		return parsedDateI.Before(parsedDateJ)
+	})
+	return structuredDatas
 }
 
 // construct the map[string]map[string]int to count the nb de occurence
@@ -79,6 +101,7 @@ func generateDateKey(inputData AnalysisInDataStruct) string {
 }
 
 // find the most occured pair of filename/errMsg and put it in the returned array
+// Notes : Time complexity of O(n^2), I couldn't find better optimized solution for this case
 func createSlicesOfMostOccurence(counter map[string]map[string]int) []FilteredAnalysisDataStruct {
 	var filteredDatas []FilteredAnalysisDataStruct
 
