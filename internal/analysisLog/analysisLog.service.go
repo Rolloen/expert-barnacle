@@ -32,7 +32,7 @@ func FormatDataAnalysisToStruct(inpDatas [][]string) ([]AnalysisInDataStruct, er
 			FileName: data[1],
 		}
 		if len(data) > 3 {
-			structuredDatas[i].ErrMsg = strings.Join(data[2:], ",")
+			structuredDatas[i].ErrMsg = strings.Join(data[2:], ", ")
 		} else {
 			structuredDatas[i].ErrMsg = data[2]
 		}
@@ -101,32 +101,42 @@ func generateDateKey(inputData AnalysisInDataStruct) string {
 }
 
 // find the most occured pair of filename/errMsg and put it in the returned array
+//
+// Special cases : if no pair of filename/errMsg occured more than other, put all the most occurred in the array
+//
 // Notes : Time complexity of O(n^2), I couldn't find better optimized solution for this case
 func createSlicesOfMostOccurence(counter map[string]map[string]int) []FilteredAnalysisDataStruct {
 	var filteredDatas []FilteredAnalysisDataStruct
 
 	for dateKey, msgMap := range counter {
-		var mostOccuredMsg string
+		var mostOccuredMsg []string
 		max := 0
 		for msgKey, count := range msgMap {
-			if count > max {
+			if (count > max && max >= 0) || max == 0 {
 				max = count
-				mostOccuredMsg = msgKey
+				mostOccuredMsg = nil
+				mostOccuredMsg = append(mostOccuredMsg, msgKey)
+			} else if count == max && max >= 0 {
+				max = count
+				mostOccuredMsg = append(mostOccuredMsg, msgKey)
 			}
 		}
-		splitedDateStr := strings.Split(dateKey, "-")
-		date := splitedDateStr[0]
-		hour := splitedDateStr[1]
-		splitedMsgStr := strings.Split(mostOccuredMsg, "-")
-		filename := splitedMsgStr[0]
-		errMsg := splitedMsgStr[1]
-		tempFilteredData := FilteredAnalysisDataStruct{
-			DateFormatted: date,
-			HourFormatted: hour,
-			FileName:      filename,
-			ErrMsg:        errMsg,
+
+		for _, mostKey := range mostOccuredMsg {
+			splitedDateStr := strings.Split(dateKey, "-")
+			date := splitedDateStr[0]
+			hour := splitedDateStr[1]
+			splitedMsgStr := strings.Split(mostKey, "-")
+			filename := splitedMsgStr[0]
+			errMsg := splitedMsgStr[1]
+			tempFilteredData := FilteredAnalysisDataStruct{
+				DateFormatted: date,
+				HourFormatted: hour,
+				FileName:      filename,
+				ErrMsg:        errMsg,
+			}
+			filteredDatas = append(filteredDatas, tempFilteredData)
 		}
-		filteredDatas = append(filteredDatas, tempFilteredData)
 	}
 	return filteredDatas
 }

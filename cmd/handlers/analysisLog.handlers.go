@@ -29,7 +29,7 @@ func GetDataLogHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Use the structured data to find the most logged error grouped by day and hour
 	filteredStructuredData := analysisLog.FilterDatas(structuredData)
-	// NOTES: not the most optimal way but I could find a optimized way of filtering data AND keeping the order
+	// NOTES: not the most optimal way but I couldn't find a optimized way of filtering data AND keeping the order
 	sortedFilteredStrucData := analysisLog.SortStrucDataByDateAndHour(filteredStructuredData)
 	// convert struct data to CSV readable data
 	parsedCsvData := analysisLog.ConvertStructDataToCSVData(sortedFilteredStrucData)

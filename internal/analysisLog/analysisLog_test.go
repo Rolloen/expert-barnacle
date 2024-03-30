@@ -269,57 +269,58 @@ func TestFilterDatasWithSpecialCase(t *testing.T) {
 
 	// Act
 	actualOuput := FilterDatas(input)
+
 	// Assert
 	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
 
 }
 
 // special case where there are no most occurence (equality in count per pair of filename/err msg)
-//TODO:
-// func TestFilterDatasWithSpecialCaseError(t *testing.T) {
+func TestFilterDatasWithSpecialCaseDuplicate(t *testing.T) {
 
-// 	// Arrange
-// 	input := []AnalysisInDataStruct{
-// 		{
-// 			Date:     time.Date(2019, 04, 13, 23, 01, 39, 00, utc2),
-// 			FileName: "network.go",
-// 			ErrMsg:   "Network connection established",
-// 		},
-// 		{
-// 			Date:     time.Date(2019, 04, 13, 12, 01, 42, 00, utc2),
-// 			FileName: "db.go",
-// 			ErrMsg:   "Transaction failed",
-// 		},
-// 		{
-// 			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
-// 			FileName: "network.go",
-// 			ErrMsg:   "Network connection established",
-// 		},
-// 		{
-// 			Date:     time.Date(2019, 04, 14, 00, 10, 42, 00, utc2),
-// 			FileName: "db.go",
-// 			ErrMsg:   "Transaction failed",
-// 		},
-// 	}
+	// Arrange
+	input := []AnalysisInDataStruct{
+		{
+			Date:     time.Date(2019, 04, 13, 12, 01, 39, 00, utc2),
+			FileName: "network.go",
+			ErrMsg:   "Network connection established",
+		},
+		{
+			Date:     time.Date(2019, 04, 13, 12, 01, 42, 00, utc2),
+			FileName: "db.go",
+			ErrMsg:   "Transaction failed",
+		},
+		{
+			Date:     time.Date(2019, 04, 13, 12, 10, 42, 00, utc2),
+			FileName: "procrastinationService.go",
+			ErrMsg:   "Procrastination initiated",
+		},
+	}
 
-// 	expectedOutput := []FilteredAnalysisDataStruct{
-// 		{
-// 			DateFormatted: "14042019",
-// 			HourFormatted: "00",
-// 			FileName:      "network.go",
-// 			ErrMsg:        "Network connection established",
-// 		},
-// 		{
-// 			DateFormatted: "13042019",
-// 			HourFormatted: "12",
-// 			FileName:      "db.go",
-// 			ErrMsg:        "Transaction failed",
-// 		},
-// 	}
+	expectedOutput := []FilteredAnalysisDataStruct{
+		{
+			DateFormatted: "13042019",
+			HourFormatted: "12",
+			FileName:      "network.go",
+			ErrMsg:        "Network connection established",
+		},
+		{
+			DateFormatted: "13042019",
+			HourFormatted: "12",
+			FileName:      "db.go",
+			ErrMsg:        "Transaction failed",
+		},
+		{
+			DateFormatted: "13042019",
+			HourFormatted: "12",
+			FileName:      "procrastinationService.go",
+			ErrMsg:        "Procrastination initiated",
+		},
+	}
 
-// 	// Act
-// 	actualOuput := FilterDatas(input)
-// 	// Assert
-// 	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
+	// Act
+	actualOuput := FilterDatas(input)
+	// Assert
+	assertFilteredDataEqualsExpectedData(t, expectedOutput, actualOuput)
 
-// }
+}
