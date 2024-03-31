@@ -63,8 +63,8 @@ func ConvertStructDataToCSVData(structuredDatas []FilteredAnalysisDataStruct) []
 
 func SortStrucDataByDateAndHour(structuredDatas []FilteredAnalysisDataStruct) []FilteredAnalysisDataStruct {
 	sort.Slice(structuredDatas, func(i, j int) bool {
-		parsedDateI, _ := time.Parse("0201200615", structuredDatas[i].DateFormatted+structuredDatas[i].HourFormatted)
-		parsedDateJ, _ := time.Parse("0201200615", structuredDatas[j].DateFormatted+structuredDatas[j].HourFormatted)
+		parsedDateI, _ := time.Parse(OUTPUT_DATE_FORMAT, structuredDatas[i].DateFormatted+structuredDatas[i].HourFormatted)
+		parsedDateJ, _ := time.Parse(OUTPUT_DATE_FORMAT, structuredDatas[j].DateFormatted+structuredDatas[j].HourFormatted)
 		return parsedDateI.Before(parsedDateJ)
 	})
 	return structuredDatas

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"techTest/internal/analysisLog"
-	"techTest/pkg"
+	csvService "techTest/pkg/csv"
 )
 
 const FORMATTED_LOG_NAME = "formattedLog"
@@ -13,7 +13,7 @@ const FORMATTED_LOG_NAME = "formattedLog"
 func GetDataLogHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Read the input CSV file
-	data, err := pkg.ReadCSVFromSources(pkg.CSV_SOURCE_FILE)
+	data, err := csvService.ReadCSVFromSources(csvService.CSV_SOURCE_FILE)
 	if err != nil {
 		fmt.Println("error : ", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

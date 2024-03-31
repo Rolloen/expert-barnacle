@@ -1,0 +1,6 @@
+services:
+  server:
+    image: serverapp
+    build: ./
+    ports:
+      - 15442:15442

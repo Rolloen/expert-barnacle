@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,11 +17,11 @@ func main() {
 	Routes(routerMux)
 
 	server := &http.Server{
-		Addr:    os.Getenv("HOST") + ":" + os.Getenv("PORT"),
+		Addr:    ":" + os.Getenv("PORT"),
 		Handler: routerMux,
 	}
-
+	fmt.Println("LAUNCHING SERVER on " + server.Addr)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalln("oups", err)
+		log.Fatalln("Error has occured when launching the server", err)
 	}
 }
